@@ -16,7 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.zerock.club.security.filter.ApiCheckFilter;
 import org.zerock.club.security.filter.ApiLoginFilter;
+import org.zerock.club.security.handler.ApiLoginFailHandler;
 import org.zerock.club.security.handler.ClubLoginSuccessHandler;
+import org.zerock.club.security.util.JWTUtil;
 
 @Configuration
 @EnableWebSecurity
@@ -77,8 +79,9 @@ public class SecurityConfig {
         http.authenticationManager(authenticationManager);
 
         //ApiLoginFilter
-        ApiLoginFilter apiLoginFilter = new ApiLoginFilter("/api/login");
-        apiLoginFilter.setAuthenticationManager(authenticationManager);
+        ApiLoginFilter apiLoginFilter = new ApiLoginFilter("/api/login",jwtUtil());
+        apiLoginFilter.setAuthenticationManager(authenticationManager); // spring이 자동으로만든 인증방법
+        apiLoginFilter.setAuthenticationFailureHandler(new ApiLoginFailHandler());
         // ApiLoginFilter의 인증 방법 설정
 
 
@@ -94,7 +97,13 @@ public class SecurityConfig {
 
     @Bean
     public ApiCheckFilter apiCheckFilter() {
-        return new ApiCheckFilter("/notes/**/*");
+        return new ApiCheckFilter("/notes/**/*",jwtUtil());
     }
+
+    @Bean
+    public JWTUtil jwtUtil() {
+        return new JWTUtil();
+    }
+
 
 }

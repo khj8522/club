@@ -9,6 +9,7 @@ import net.minidev.json.JSONObject;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.zerock.club.security.util.JWTUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,9 +21,12 @@ public class ApiCheckFilter extends OncePerRequestFilter {
 
     private String pattern;
 
-    public ApiCheckFilter(String pattern) {
+    private JWTUtil jwtUtil;
+
+    public ApiCheckFilter(String pattern, JWTUtil jwtUtil) {
         this.antPathMatcher = new AntPathMatcher();
         this.pattern = pattern;
+        this.jwtUtil = jwtUtil; // 받아온 비밀 키 주입
     }
 
     @Override
@@ -71,11 +75,18 @@ public class ApiCheckFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if(StringUtils.hasText(authHeader)) {
+        if(StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             log.info("Authorization exist: " + authHeader);
-            if(authHeader.equals("12345678")) {
-                checkResult = true;
+
+            try {
+                String email = jwtUtil.validateAndExtract(authHeader.substring(7)); // 토큰 비교
+                log.info("validate result : " + email);
+                checkResult = email.length() > 0;
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+
         }
     return checkResult;
     }
